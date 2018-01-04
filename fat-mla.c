@@ -35,9 +35,9 @@
 
 #define FATMLA_FAT_BLOCK_SIZE   512
 
-#ifdef FATMLA_DEVICE_SPI
+#if defined(FATMLA_DEVICE_SPI)
 static SDCard_Device FATMLA_card;
-#else
+#elif defined(FATMLA_DEVICE_SDHC)
 
 #endif
 
@@ -79,7 +79,7 @@ DSTATUS disk_initialize (BYTE pdrv)
     // Supports only drive 0 (SD Card)
     if (pdrv) return STA_NOINIT;
 
-    // Return error when init fuction didn't call
+    // Return error when init function didn't call
     if (!FATMLA_isConfigured) return STA_NOINIT;
 
 #if defined(FATMLA_DEVICE_SPI)
@@ -260,5 +260,9 @@ DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff)
 
 DWORD get_fattime (void)
 {
+#ifdef LIBOHIBOARD_RTC
+    return (DWORD) Rtc_getTime(OB_RTC0);
+#else
     return 0;
+#endif
 }

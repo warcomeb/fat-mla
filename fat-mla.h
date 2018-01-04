@@ -51,9 +51,6 @@
 
 #include "sdcard/sdcard.h"
 
-/*
- * The user must define these label...
- */
 #ifndef __NO_BOARD_H
 #include "board.h"
 #endif
