@@ -1,6 +1,6 @@
 /******************************************************************************
  * FAT-MLA - FAT32 Medium Layer Adapter
- * Copyright (C) 2017 Marco Giammarini
+ * Copyright (C) 2017-2018 Marco Giammarini
  *
  * Authors:
  *  Marco Giammarini <m.giammarini@warcomeb.it>
@@ -30,7 +30,7 @@
  *
  * @section changelog ChangeLog
  *
- * @li v1.0 of 2017/02/XX - First release
+ * @li v1.0.0 of 2018/01/04 - First release
  *
  * @section library External Library
  *
@@ -43,9 +43,10 @@
 #ifndef __WARCOMEB_FATMLA_H
 #define __WARCOMEB_FATMLA_H
 
-#define WARCOMEB_FATMLA_LIBRARY_VERSION     "1.0"
+#define WARCOMEB_FATMLA_LIBRARY_VERSION     "1.0.0"
 #define WARCOMEB_FATMLA_LIBRARY_VERSION_M   1
 #define WARCOMEB_FATMLA_LIBRARY_VERSION_m   0
+#define WARCOMEB_FATMLA_LIBRARY_VERSION_bug 0
 #define WARCOMEB_FATMLA_LIBRARY_TIME        1470148734
 
 #include "sdcard/sdcard.h"
@@ -57,10 +58,21 @@
 #include "board.h"
 #endif
 
+#if !defined(FATMLA_DEVICE_SPI) && !defined(FATMLA_DEVICE_SDHC)
+#error "Error: Communication type with SDCard is not defined!"
+#endif
+
+#if defined(FATMLA_DEVICE_SPI) && !defined(LIBOHIBOARD_SPI)
+#error "Error: SPI must be enabled into libohiboard!"
+#endif
+
+#if defined(FATMLA_DEVICE_SPI) && defined(FATMLA_DEVICE_SDHC)
+#error "Error: You must choose only one communication type!"
+#endif
 
 typedef struct _FATMLA_Config
 {
-#ifdef FATMLA_DEVICE_SPI
+#if defined(FATMLA_DEVICE_SPI)
 
     Spi_DeviceHandle   device;
     Gpio_Pins          csPin;
@@ -69,13 +81,12 @@ typedef struct _FATMLA_Config
     void (*delayTime)(uint32_t delay);       /**< Function for blocking delay */
     uint32_t (*currentTime)(void);             /**< Function for current time */
 
-#else
+#elif defined(FATMLA_DEVICE_SDHC)
 
 #endif
 
 } FATMLA_Config;
 
 void FATMLA_init (FATMLA_Config* config);
-
 
 #endif /* __WARCOMEB_FATMLA_H */

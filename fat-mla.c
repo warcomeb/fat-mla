@@ -1,6 +1,6 @@
 /******************************************************************************
  * FAT-MLA - FAT32 Medium Layer Adapter
- * Copyright (C) 2017 Marco Giammarini
+ * Copyright (C) 2017-2018 Marco Giammarini
  *
  * Authors:
  *  Marco Giammarini <m.giammarini@warcomeb.it>
@@ -50,14 +50,15 @@ static bool FATMLA_isConfigured = FALSE;
 
 void FATMLA_init (FATMLA_Config* config)
 {
-#ifdef FATMLA_DEVICE_SPI
+#if defined(FATMLA_DEVICE_SPI)
     FATMLA_card.device      = config->device;
     FATMLA_card.csPin       = config->csPin;
     FATMLA_card.cpPin       = config->cpPin;
     FATMLA_card.cpType      = config->cpType;
     FATMLA_card.delayTime   = config->delayTime;
     FATMLA_card.currentTime = config->currentTime;
-#else
+#elif defined(FATMLA_DEVICE_SDHC)
+
 #endif
 
     FATMLA_isConfigured = TRUE;
@@ -69,9 +70,9 @@ void FATMLA_init (FATMLA_Config* config)
 
 DSTATUS disk_initialize (BYTE pdrv)
 {
-#ifdef FATMLA_DEVICE_SPI
+#if defined(FATMLA_DEVICE_SPI)
     SDCard_Errors error;
-#else
+#elif defined(FATMLA_DEVICE_SDHC)
 
 #endif
 
@@ -81,7 +82,7 @@ DSTATUS disk_initialize (BYTE pdrv)
     // Return error when init fuction didn't call
     if (!FATMLA_isConfigured) return STA_NOINIT;
 
-#ifdef FATMLA_DEVICE_SPI
+#if defined(FATMLA_DEVICE_SPI)
 
     error = SDCard_init(&FATMLA_card);
 
@@ -89,7 +90,8 @@ DSTATUS disk_initialize (BYTE pdrv)
         return STA_NOINIT;
     else
         return 0;
-#else
+
+#elif defined(FATMLA_DEVICE_SDHC)
 
 #endif
 }
@@ -114,11 +116,13 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
     // Single block read
     if (count == 1)
     {
-//        Cli_sendString("R1");
         do
         {
-//            Cli_sendString("R11");
+#if defined(FATMLA_DEVICE_SPI)
             error = SDCard_readBlock(&FATMLA_card,sector,(uint8_t*)buff);
+#elif defined(FATMLA_DEVICE_SDHC)
+
+#endif
             retry++;
             if (retry > 10)
             {
@@ -126,19 +130,18 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
             }
             FATMLA_card.delayTime(100); // 100ms
         } while (error != SDCARD_ERRORS_OK);
-//        if (SDCard_readBlock(&FATMLA_card,sector,(uint8_t*)buff) != SDCARD_ERRORS_OK)
-//        {
-//            return RES_ERROR;
-//        }
         count = 0;
     }
     // Read multiple blocks
     else
     {
-//        Cli_sendString("RN");
         do
         {
+#if defined(FATMLA_DEVICE_SPI)
             error = SDCard_readBlocks(&FATMLA_card,sector,(uint8_t*)buff,count);
+#elif defined(FATMLA_DEVICE_SDHC)
+
+#endif
             retry++;
             if (retry > 10)
             {
@@ -146,10 +149,6 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count)
             }
             FATMLA_card.delayTime(100); // 100ms
         } while (error != SDCARD_ERRORS_OK);
-//        if (SDCard_readBlocks(&FATMLA_card,sector,(uint8_t*)buff,count) != SDCARD_ERRORS_OK)
-//        {
-//            return RES_ERROR;
-//        }
         count = 0;
     }
     return count ? RES_ERROR : RES_OK;
@@ -166,31 +165,32 @@ DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
     // Single block write
     if (count == 1)
     {
-//    	Cli_sendString("W1");
         do
         {
+#if defined(FATMLA_DEVICE_SPI)
             error = SDCard_writeBlock(&FATMLA_card,sector,(uint8_t*)buff);
+#elif defined(FATMLA_DEVICE_SDHC)
+
+#endif
             retry++;
-//            Cli_sendString("W11");
             if (retry > 10)
             {
                 return RES_ERROR;
             }
             FATMLA_card.delayTime(100); // 100ms
         } while (error != SDCARD_ERRORS_OK);
-//        if (SDCard_writeBlock(&FATMLA_card,sector,(uint8_t*)buff) != SDCARD_ERRORS_OK)
-//        {
-//            return RES_ERROR;
-//        }
         count = 0;
 	}
     // Write multiple blocks
     else
     {
-//    	Cli_sendString("WN");
         do
         {
+#if defined(FATMLA_DEVICE_SPI)
             error = SDCard_writeBlocks(&FATMLA_card,sector,(uint8_t*)buff,count);
+#elif defined(FATMLA_DEVICE_SDHC)
+
+#endif
             retry++;
             if (retry > 10)
             {
@@ -198,10 +198,6 @@ DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count)
             }
             FATMLA_card.delayTime(100); // 100ms
         } while (error != SDCARD_ERRORS_OK);
-//        if (SDCard_writeBlocks(&FATMLA_card,sector,(uint8_t*)buff,count) != SDCARD_ERRORS_OK)
-//        {
-//            return RES_ERROR;
-//        }
         count = 0;
     }
     return count ? RES_ERROR : RES_OK;
